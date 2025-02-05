@@ -1,0 +1,6 @@
+beautifulsoup4
+Flask
+google-cloud-aiplatform[reasoningengine]
+langchain
+langchain_google_vertexai
+langgraph

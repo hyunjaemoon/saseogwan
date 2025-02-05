@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Creation Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 5px;
+        }
+
+        #chat-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .chat-box {
+            height: 400px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .user-message {
+            background-color: #e6e6e6;
+            margin-left: 20%;
+        }
+
+        .bot-message {
+            background-color: #f5f5f5;
+            margin-right: 20%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="company-form">
+            <h1>Create Your Company</h1>
+            <form id="createCompanyForm">
+                <div class="form-group">
+                    <label for="companyName">Company Name:</label>
+                    <input type="text" id="companyName" required>
+                </div>
+                <div class="form-group">
+                    <label for="industry">Industry:</label>
+                    <input type="text" id="industry" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description" rows="4" required></textarea>
+                </div>
+                <button type="submit">Create Company</button>
+            </form>
+        </div>
+
+        <div id="chat-container">
+            <h2>Chat with Your Business Assistant</h2>
+            <div class="chat-box" id="chatBox"></div>
+            <div class="form-group">
+                <input type="text" id="userInput" placeholder="Type your message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let companyId = null;  // Add this variable to store company ID
+
+        document.getElementById('createCompanyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const companyData = {
+                name: document.getElementById('companyName').value,
+                industry: document.getElementById('industry').value,
+                description: document.getElementById('description').value
+            };
+
+            try {
+                const response = await fetch('/company', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(companyData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();  // Get response data
+                    companyId = data.company.id;  // Store the company ID
+                    document.getElementById('company-form').style.display = 'none';
+                    document.getElementById('chat-container').style.display = 'block';
+                } else {
+                    alert('Error creating company');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating company');
+            }
+        });
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+
+            if (!message) return;
+
+            // Display user message
+            addMessage(message, 'user-message');
+            userInput.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        company_id: companyId  // Include company_id in chat requests
+                    })
+                });
+
+                const data = await response.json();
+
+                // Display bot response
+                addMessage(data.response, 'bot-message');
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your message.', 'bot-message');
+            }
+        }
+
+        function addMessage(message, className) {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.textContent = message;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Allow sending message with Enter key
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>
