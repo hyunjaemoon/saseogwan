@@ -1,5 +1,5 @@
 # saseogwan
-사서관AI 비즈니스 프레임워크 웹서비스
+사서관AI 비즈니스 에이전트 웹서비스
 https://saseogwan.com
 
 # Author
